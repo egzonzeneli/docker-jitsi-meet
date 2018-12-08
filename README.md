@@ -51,11 +51,8 @@ A Jitsi Meet installation can be broken down into the following components:
 
 ![](resources/docker-jitsi-meet.png)
 
-The diagram shows a typical deployment in a host running Docker, with a separate container
-(not included in this project) which acts as a reverse proxy and SSL terminator, then
-passing the traffic to the web container serving Jitsi Meet.
-
-This project separates each of the components above into interlinked containers. To this end,
+The diagram shows a typical deployment in a host running Docker. This project
+separates each of the components above into interlinked containers. To this end,
 several container images are provided.
 
 ### Images
@@ -91,6 +88,23 @@ Variable | Description | Example
 `HTTPS_PORT` | Exposed port for HTTPS traffic | 8443
 `DOCKER_HOST_ADDRESS` | IP address of the Docker host, needed for LAN environments | 192.168.1.1
 
+**NOTE**: The mobile apps won't work with self-signed certificates (the default)
+see below for instructions on how to obtain a proper certificate with Let's Encrypt.
+
+### Let's Encrypt configuration
+
+If you plan on exposing this container setup to the outside traffic directly and
+want a proper TLS certificate, you are in luck because Let's Encrypt support is
+built right in. Here are the required options:
+
+Variable | Description | Example
+--- | --- | ---
+`ENABLE_LETSENCRYPT` | Enable Let's Encrypt certificate generation | 1
+`LETSENCRYPT_DOMAIN` | Domain for which to generate the certificate | meet.example.com
+`LETSENCRYPT_EMAIL` | E-Mail for receiving important account notifications (mandatory) | alice@atlanta.net
+
+In addition, you will need to set `HTTP_PORT` to 80 and `HTTPS_PORT` to 443.
+
 ### SIP gateway configuration
 
 If you want to enable the SIP gateway, these options are required:
@@ -100,6 +114,8 @@ Variable | Description | Example
 `JIGASI_SIP_URI` | SIP URI for incoming / outgoing calls | test@sip2sip.info
 `JIGASI_SIP_PASSWORD` | Password for the specified SIP account | passw0rd
 `JIGASI_SIP_SERVER` | SIP server (use the SIP account domain if in doubt) | sip2sip.info
+`JIGASI_SIP_PORT` | SIP server port | 5060
+`JIGASI_SIP_TRANSPORT` | SIP transport | UDP
 
 ### Authentication
 
@@ -138,7 +154,9 @@ Variable | Description | Default value
 `JVB_AUTH_USER` | XMPP user for JVB MUC client connections | jvb
 `JVB_AUTH_PASSWORD` | XMPP password for JVB MUC client connections | passw0rd
 `JVB_STUN_SERVERS` | STUN servers used to discover the server's public IP | stun.l.google.com:19302, stun1.l.google.com:19302, stun2.l.google.com:19302
-`JVB_PORT` | Port for media used by Jitsi Videobridge | 10000
+`JVB_PORT` | UDP port for media used by Jitsi Videobridge | 10000
+`JVB_TCP_HARVESTER_DISABLED` | Disable the additional harvester which allows video over TCP (rather than just UDP) | true
+`JVB_TCP_PORT` | TCP port for media used by Jitsi Videobridge when the TCP Harvester is enabled | 4443
 `JVB_BREWERY_MUC` | MUC name for the JVB pool | jvbbrewery
 `JVB_ENABLE_APIS` | Comma separated list of JVB APIs to enable | none
 `JIGASI_XMPP_USER` | XMPP user for Jigasi MUC client connections | jigasi
@@ -146,6 +164,8 @@ Variable | Description | Default value
 `JIGASI_BREWERY_MUC` | MUC name for the Jigasi pool | jigasibrewery
 `JIGASI_PORT_MIN` | Minimum port for media used by Jigasi | 20000
 `JIGASI_PORT_MAX` | Maximum port for media used by Jigasi | 20050
+`DISABLE_HTTPS` | Disable HTTPS, this can be useful if TLS connections are going to be handled outside of this setup | 1
+`ENABLE_HTTP_REDIRECT` | Redirects HTTP traffic to HTTPS | 1
 
 ### Running on a LAN environment
 
@@ -159,10 +179,8 @@ option.
 
 ## TODO
 
-* Support multiple Jitsi Videobridge containers.
 * Support container replicas (where applicable).
 * Docker Swarm mode.
-* Native Let's Encrypt support.
 * More services:
   * Jibri.
   * TURN server.
